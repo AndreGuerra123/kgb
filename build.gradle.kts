@@ -1,85 +1,43 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val kotlinVersion = "1.3.21"
-val coroutineVersion = "1.1.1"
+group = "com.amyris.kgb"
+version = "0.0.1"
+
+//Project
+val kotlinVersion = "1.3.30" //Change Below
+val gradleVersion = "5.3.1"
+
+//CLI
+val cliktVersion = "1.7.0"
+
+//Linting
+val detektVersion = "1.0.0-RC14" //Change Below
+
+//Docs
+val dokkaVersion = "0.9.18"//Change Below
+
+//Testing
 val jUnitVersion = "5.4.2"
-val spekVersion = "2.0.2"
-val kluentVersion = "1.49"
-val easyRandomVersion = "4.0.0.RC1"
-val logbackVersion = "1.2.3"
-val mockKVersion = "1.9.3"
+
+//Coverage
+val jacocoVersion = "0.8.3"
+
+//Shadow
+val shadowVersion = "5.0.0"//Change Below
 
 plugins {
     application
-    kotlin("jvm") version "1.3.21"
-    id("io.gitlab.arturbosch.detekt").version("1.0.0.RC9")
-
+    java
+    kotlin("jvm") version "1.3.30"
+    id("io.gitlab.arturbosch.detekt").version("1.0.0-RC14")
+    id("org.jetbrains.dokka").version("0.9.18")
+    id("com.github.johnrengelman.shadow").version("5.0.0")
     jacoco
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    jcenter()
-}
-
-group = "id.jasoet.boilerplate"
-version = "1.0.0"
-
 application {
-    mainClassName = "id.jasoet.boilerplate.Application"
-}
-
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation(kotlin("reflect"))
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVersion")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-
-    testImplementation(kotlin("test"))
-    testImplementation(kotlin("test-junit"))
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$jUnitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jUnitVersion")
-    testImplementation("org.amshove.kluent:kluent:$kluentVersion")
-    testImplementation("io.mockk:mockk:$mockKVersion")
-    testImplementation("org.jeasy:easy-random-core:$easyRandomVersion")
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
-    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
-}
-
-jacoco {
-    toolVersion = "0.8.3"
-}
-
-tasks.jacocoTestReport {
-    group = "Reporting"
-    reports {
-        xml.isEnabled = true
-        html.isEnabled = true
-        csv.isEnabled = false
-    }
-}
-
-detekt {
-    version = "1.0.0.RC14"
-    config = files("$rootDir/detekt.yml")
-    filters = ".*test.*,.*/resources/.*,.*/tmp/.*"
-}
-
-tasks.test {
-    finalizedBy(tasks.detekt, tasks.jacocoTestReport)
-
-    useJUnitPlatform {
-        includeEngines("junit-jupiter","spek2")
-    }
-
-    testLogging {
-        exceptionFormat = TestExceptionFormat.FULL
-        events("passed", "failed", "skipped")
-    }
+    mainClassName = "com.amyris.kgb.CliKt"
 }
 
 tasks.withType<KotlinCompile> {
@@ -95,6 +53,62 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-tasks.wrapper {
-    gradleVersion = "5.3.1"
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
 }
+
+dependencies {
+    implementation(kotlin("stdlib-jdk8"))
+    implementation("com.github.ajalt:clikt:$cliktVersion")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion")
+    implementation("com.github.jengelman.gradle.plugins:shadow:$shadowVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$jUnitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jUnitVersion")
+
+}
+
+
+tasks.detekt {
+    group = "Linting"
+    config = files("$rootDir/detekt.yml")
+}
+
+tasks.dokka {
+    outputFormat = "html"
+    outputDirectory = "$buildDir/javadoc"
+}
+
+tasks.test {
+    group="testing"
+    useJUnitPlatform()
+    testLogging {
+        exceptionFormat = TestExceptionFormat.FULL
+        events("passed", "failed", "skipped")
+    }
+    finalizedBy(tasks.detekt,tasks.dokka,tasks.jacocoTestReport,tasks.shadowJar)
+
+}
+
+tasks.jacocoTestReport {
+    group = "coverage"
+    reports {
+        xml.isEnabled = false
+        html.isEnabled = true
+        csv.isEnabled = false
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
